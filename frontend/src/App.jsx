@@ -1,20 +1,37 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Container, Typography } from '@mui/material';
 import SearchBar from './components/SearchBar';
 import BookGrid from './components/BookGrid';
 import PaginationControls from './components/PaginationControls';
 import { mockBooks } from '../mockData';
 import debounce from 'lodash/debounce';
+import axios from 'axios';
 
 const App = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
-  const [filteredBooks, setFilteredBooks] = useState(mockBooks.items);
-
+  const [filteredBooks, setFilteredBooks] = useState([]);
+ const [books,setBooks]=useState([])
+  const fetchBooks = async () => {
+    try {
+        const response = await axios.get('http://localhost:5001/api/books', {
+            params: { query, page, limit },
+        });
+        console.log('Response:', response.data); // Debug log
+        setBooks(response.data.books);
+        setFilteredBooks(response.data.books);
+    } catch (error) {
+        console.error('Error fetching books:', error.message);
+    }
+};
+useEffect(()=>{
+  fetchBooks();
+},[query, page, limit])
+console.log("Books",books)
   const debouncedSearch = useMemo(() => 
     debounce((searchValue) => {
-      const filtered = mockBooks.items.filter((book) =>
+      const filtered = books.items.filter((book) =>
         book.volumeInfo.title.toLowerCase().includes(searchValue.toLowerCase()) ||
         book.volumeInfo.authors.some((author) => author.toLowerCase().includes(searchValue.toLowerCase()))
       );
