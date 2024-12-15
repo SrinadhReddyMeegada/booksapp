@@ -1,69 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import BookCard from './components/BookCard';
-import Pagination from './components/Pagination';
+import React, { useState, useMemo } from 'react';
+import { Container, Typography } from '@mui/material';
+import SearchBar from './components/SearchBar';
+import BookGrid from './components/BookGrid';
+import PaginationControls from './components/PaginationControls';
+import { mockBooks } from '../mockData';
+import debounce from 'lodash/debounce';
 
 const App = () => {
-    const [query, setQuery] = useState('');
-    const [books, setBooks] = useState([]);
-    const [stats, setStats] = useState({});
-    const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+  const [filteredBooks, setFilteredBooks] = useState(mockBooks.items);
 
-    const fetchBooks = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/api/books', {
-                params: { query, page, limit },
-            });
-            setBooks(response.data.books);
-            setStats({
-                totalItems: response.data.totalItems,
-                mostCommonAuthor: response.data.mostCommonAuthor,
-                earliestDate: response.data.earliestDate,
-                latestDate: response.data.latestDate,
-                responseTime: response.data.responseTime,
-            });
-        } catch (error) {
-            console.error('Error fetching books:', error);
-        }
-    };
+  const debouncedSearch = useMemo(() => 
+    debounce((searchValue) => {
+      const filtered = mockBooks.items.filter((book) =>
+        book.volumeInfo.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+        book.volumeInfo.authors.some((author) => author.toLowerCase().includes(searchValue.toLowerCase()))
+      );
 
-    useEffect(() => {
-        if (query) fetchBooks();
-    }, [query, page, limit]);
+      setFilteredBooks(filtered);
+      setPage(1);
+    }, 300),
+  []);
 
-    return (
-        <div className="app">
-            <h1>Google Books Search</h1>
-            <input
-                type="text"
-                placeholder="Search for books..."
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-            />
-            <select value={limit} onChange={e => setLimit(e.target.value)}>
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-            </select>
-            <div>
-                {books.map(book => (
-                    <BookCard key={book.id} book={book} />
-                ))}
-            </div>
-            <Pagination
-                pageCount={Math.ceil(stats.totalItems / limit)}
-                onPageChange={({ selected }) => setPage(selected + 1)}
-            />
-            <div>
-                <p>Total Results: {stats.totalItems}</p>
-                <p>Most Common Author: {stats.mostCommonAuthor}</p>
-                <p>Earliest Date: {stats.earliestDate}</p>
-                <p>Latest Date: {stats.latestDate}</p>
-                <p>Server Response Time: {stats.responseTime}</p>
-            </div>
-        </div>
-    );
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setQuery(searchValue);
+    debouncedSearch(searchValue);
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
+
+  const handleLimitChange = (event) => {
+    setLimit(event.target.value);
+    setPage(1);
+  };
+
+  const paginatedBooks = filteredBooks.slice((page - 1) * limit, page * limit);
+
+  return (
+    <Container sx={{ paddingY: 4 }}>
+      <Typography variant="h4" gutterBottom textAlign="center" sx={{ fontWeight: 'bold' }}>
+        Google Books Search
+      </Typography>
+
+      <SearchBar query={query} onSearch={handleSearch} />
+      <BookGrid books={paginatedBooks} />
+      <PaginationControls
+        totalItems={filteredBooks.length}
+        page={page}
+        limit={limit}
+        onPageChange={handlePageChange}
+        onLimitChange={handleLimitChange}
+      />
+    </Container>
+  );
 };
 
 export default App;
