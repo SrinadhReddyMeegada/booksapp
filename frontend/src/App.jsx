@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useCallback, useEffect, useState, } from 'react';
 import { Container, Typography, Box, Divider } from '@mui/material';
 import SearchBar from './components/SearchBar';
 import BookGrid from './components/BookGrid';
@@ -6,12 +6,13 @@ import PaginationControls from './components/PaginationControls';
 import debounce from 'lodash/debounce';
 import axios from 'axios';
 
+const BACKEND_URL = 'http://localhost:5411';
 const App = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [books, setBooks] = useState([]);
-  const [filteredBooks, setFilteredBooks] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     totalItems: 0,
     mostCommonAuthor: 'N/A',
@@ -20,17 +21,14 @@ const App = () => {
     responseTime: 'N/A',
   });
 
-  const fetchBooks = async () => {
+  const fetchBooks = async (searchValue) => {
     try {
-      const start = Date.now();
-      const response = await axios.get('http://localhost:5001/api/books', {
-        params: { query, page, limit },
+      setLoading(true);
+      const response = await axios.get(`${BACKEND_URL}/api/books`, {
+        params: { query: searchValue, page, limit },
       });
-      const elapsed = Date.now() - start;
-
       const booksData = response.data.books || [];
       setBooks(booksData);
-      setFilteredBooks(booksData);
 
       // Update stats
       setStats({
@@ -38,31 +36,26 @@ const App = () => {
         mostCommonAuthor: response.data.mostCommonAuthor || 'N/A',
         earliestDate: response.data.earliestDate || 'N/A',
         latestDate: response.data.latestDate || 'N/A',
-        responseTime: `${elapsed}ms`,
+        responseTime: response.data.responseTime,
       });
     } catch (error) {
       console.error('Error fetching books:', error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBooks();
-  }, [query, page, limit]);
+    if(!query) return;
+    fetchBooks(query);
+  }, [page, limit]);
 
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((searchValue) => {
-        const filtered = books.filter((book) =>
-          book.title.toLowerCase().includes(searchValue.toLowerCase()) ||
-          book.authors.some((author) => author.toLowerCase().includes(searchValue.toLowerCase()))
-        );
-
-        setFilteredBooks(filtered);
-        setPage(1);
-      }, 300),
-    [books]
+  const debouncedSearch = useCallback(
+    debounce((searchValue) => {
+      fetchBooks(searchValue);
+    }, 300),
+    [debounce]
   );
-
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setQuery(searchValue);
@@ -78,15 +71,23 @@ const App = () => {
     setPage(1);
   };
 
-  const paginatedBooks = filteredBooks.slice((page - 1) * limit, page * limit);
-
   return (
     <Container sx={{ paddingY: 4 }}>
       <Typography variant="h4" gutterBottom textAlign="center" sx={{ fontWeight: 'bold' }}>
         Google Books Search
       </Typography>
 
-      {/* Statistics Section */}
+      <SearchBar query={query} onSearch={handleSearch} />
+      <BookGrid books={books} loading={loading} />
+      <PaginationControls
+        totalItems={stats.totalItems}
+        page={page}
+        limit={limit}
+        onPageChange={handlePageChange}
+        onLimitChange={handleLimitChange}
+      />
+
+            {/* Statistics Section */}
       <Box sx={{ marginY: 3 }}>
         <Typography variant="h6" gutterBottom>
           Statistics
@@ -98,16 +99,6 @@ const App = () => {
         <Typography>Latest Publication Date: {stats.latestDate}</Typography>
         <Typography>Response Time: {stats.responseTime}</Typography>
       </Box>
-
-      <SearchBar query={query} onSearch={handleSearch} />
-      <BookGrid books={paginatedBooks} />
-      <PaginationControls
-        totalItems={filteredBooks.length}
-        page={page}
-        limit={limit}
-        onPageChange={handlePageChange}
-        onLimitChange={handleLimitChange}
-      />
     </Container>
   );
 };
