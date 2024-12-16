@@ -26,6 +26,11 @@ const PaginationControls = ({ totalItems, page, limit, onPageChange, onLimitChan
           page={page}
           onChange={onPageChange}
           color="primary"
+          sx={{
+            backgroundColor: 'white', 
+            borderRadius: 1, 
+            padding: '4px 10px',
+          }}
         />
       </Grid>
     </Grid>
