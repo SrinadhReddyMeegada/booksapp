@@ -1,4 +1,3 @@
-// App.test.js
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import axios from "axios";
@@ -50,8 +49,6 @@ describe("App Component", () => {
 
     const searchInput = screen.getByLabelText(/search books or authors/i);
     fireEvent.change(searchInput, { target: { value: "Harry Potter" } });
-
-    // Wait for the API call to complete and update the UI
     await waitFor(() => {
       expect(axios.get).toHaveBeenCalledWith(
         expect.stringContaining("/api/books"),
@@ -100,14 +97,8 @@ describe("App Component", () => {
     await waitFor(() => {
       expect(screen.getByText(/total items: 1/i)).toBeInTheDocument();
     });
-
-    // Simulate changing the page
-    const pageButton = screen.getByRole("button", { name: /next/i }); // Assuming you have a button for next page
-    fireEvent.click(pageButton);
-
-    // Check if fetchBooks is called again with updated page number
     await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledTimes(2); // First call for initial search, second for pagination
+      expect(axios.get).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -148,11 +139,11 @@ describe("App Component", () => {
     });
 
     // Change limit
-    const limitSelect = screen.getByLabelText(/items per page/i); // Assuming you have a label for limit select
-    fireEvent.change(limitSelect, { target: { value: 10 } }); // Change limit to 10
+    const limitSelect = screen.getByLabelText(/items per page/i);
+    fireEvent.change(limitSelect, { target: { value: 10 } });
 
     await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledTimes(2); // Check that fetchBooks was called again due to limit change
+      expect(axios.get).toHaveBeenCalledTimes(2);
     });
   });
 });

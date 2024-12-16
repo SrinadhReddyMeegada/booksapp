@@ -61,7 +61,7 @@ describe("PaginationControls Component", () => {
     fireEvent.mouseDown(screen.getAllByRole("button", { name: "10" }));
     fireEvent.click(screen.getAllByRole("option", { name: "20" }));
 
-    expect(onLimitChange).toHaveBeenCalledWith(20); // Ensure the correct limit is passed
+    expect(onLimitChange).toHaveBeenCalledWith(20);
   });
 
   test("calculates total pages correctly", () => {
@@ -75,6 +75,6 @@ describe("PaginationControls Component", () => {
       />
     );
 
-    expect(screen.getByText("6")).toBeInTheDocument(); // Check if total pages are displayed correctly
+    expect(screen.getByText("6")).toBeInTheDocument();
   });
 });

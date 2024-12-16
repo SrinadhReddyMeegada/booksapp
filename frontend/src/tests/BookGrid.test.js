@@ -23,16 +23,12 @@ const mockBooks = [
 describe("BookGrid Component", () => {
   test("renders without crashing", () => {
     render(<BookGrid books={mockBooks} />);
-
-    // Check if titles are rendered correctly
     expect(screen.getByText(/Test Book 1/i)).toBeInTheDocument();
     expect(screen.getByText(/Test Book 2/i)).toBeInTheDocument();
   });
 
   test("displays authors correctly", () => {
     render(<BookGrid books={mockBooks} />);
-
-    // Check for unique author display
     expect(
       screen.getByText(/Author 1, Author 2 - Test Book 1/i)
     ).toBeInTheDocument();
@@ -63,10 +59,8 @@ describe("BookGrid Component", () => {
     // Click to view more
     const viewMoreButton = screen.getAllByRole("button", {
       name: /View More/i,
-    })[0]; // Select the first button
+    })[0];
     fireEvent.click(viewMoreButton);
-
-    // Check if full description is shown
     expect(
       screen.getByText(
         /This is a detailed description of Test Book 1 which is quite long and should be truncated./i
@@ -76,10 +70,8 @@ describe("BookGrid Component", () => {
     // Click to view less
     const viewLessButton = screen.getAllByRole("button", {
       name: /View Less/i,
-    })[0]; // Select the first button
+    })[0];
     fireEvent.click(viewLessButton);
-
-    // Check if truncated description is shown again
     expect(
       screen.getByText(
         /This is a detailed description of Test Book 1 which is quite long and should be truncated.../i
