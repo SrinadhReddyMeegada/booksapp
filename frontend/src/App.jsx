@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Container, Typography } from '@mui/material';
+import { Container, Typography, Box, Divider } from '@mui/material';
 import SearchBar from './components/SearchBar';
 import BookGrid from './components/BookGrid';
 import PaginationControls from './components/PaginationControls';
-import { mockBooks } from '../mockData';
 import debounce from 'lodash/debounce';
 import axios from 'axios';
 
@@ -11,35 +10,58 @@ const App = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
+  const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
- const [books,setBooks]=useState([])
+  const [stats, setStats] = useState({
+    totalItems: 0,
+    mostCommonAuthor: 'N/A',
+    earliestDate: 'N/A',
+    latestDate: 'N/A',
+    responseTime: 'N/A',
+  });
+
   const fetchBooks = async () => {
     try {
-        const response = await axios.get('http://localhost:5001/api/books', {
-            params: { query, page, limit },
-        });
-        console.log('Response:', response.data); // Debug log
-        setBooks(response.data.books);
-        setFilteredBooks(response.data.books);
-    } catch (error) {
-        console.error('Error fetching books:', error.message);
-    }
-};
-useEffect(()=>{
-  fetchBooks();
-},[query, page, limit])
-console.log("Books",books)
-  const debouncedSearch = useMemo(() => 
-    debounce((searchValue) => {
-      const filtered = books.items.filter((book) =>
-        book.volumeInfo.title.toLowerCase().includes(searchValue.toLowerCase()) ||
-        book.volumeInfo.authors.some((author) => author.toLowerCase().includes(searchValue.toLowerCase()))
-      );
+      const start = Date.now();
+      const response = await axios.get('http://localhost:5001/api/books', {
+        params: { query, page, limit },
+      });
+      const elapsed = Date.now() - start;
 
-      setFilteredBooks(filtered);
-      setPage(1);
-    }, 300),
-  []);
+      const booksData = response.data.books || [];
+      setBooks(booksData);
+      setFilteredBooks(booksData);
+
+      // Update stats
+      setStats({
+        totalItems: response.data.totalItems,
+        mostCommonAuthor: response.data.mostCommonAuthor || 'N/A',
+        earliestDate: response.data.earliestDate || 'N/A',
+        latestDate: response.data.latestDate || 'N/A',
+        responseTime: `${elapsed}ms`,
+      });
+    } catch (error) {
+      console.error('Error fetching books:', error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchBooks();
+  }, [query, page, limit]);
+
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((searchValue) => {
+        const filtered = books.filter((book) =>
+          book.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+          book.authors.some((author) => author.toLowerCase().includes(searchValue.toLowerCase()))
+        );
+
+        setFilteredBooks(filtered);
+        setPage(1);
+      }, 300),
+    [books]
+  );
 
   const handleSearch = (e) => {
     const searchValue = e.target.value;
@@ -63,6 +85,19 @@ console.log("Books",books)
       <Typography variant="h4" gutterBottom textAlign="center" sx={{ fontWeight: 'bold' }}>
         Google Books Search
       </Typography>
+
+      {/* Statistics Section */}
+      <Box sx={{ marginY: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Statistics
+        </Typography>
+        <Divider sx={{ marginBottom: 2 }} />
+        <Typography>Total Items: {stats.totalItems}</Typography>
+        <Typography>Most Common Author: {stats.mostCommonAuthor}</Typography>
+        <Typography>Earliest Publication Date: {stats.earliestDate}</Typography>
+        <Typography>Latest Publication Date: {stats.latestDate}</Typography>
+        <Typography>Response Time: {stats.responseTime}</Typography>
+      </Box>
 
       <SearchBar query={query} onSearch={handleSearch} />
       <BookGrid books={paginatedBooks} />
