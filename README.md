@@ -33,4 +33,9 @@ To start the development server, run:
 ```sh
 npm run dev
 ```
+## Test
+To run the tests, execute:
+```sh
+npm run test
+```
 This will start both the backend server on http://localhost:5411 and the frontend development server.

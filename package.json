@@ -4,9 +4,16 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-      "dev": "node backend/index.js && npm run dev --prefix frontend"
+        "server": "npm run dev --prefix backend",
+        "client": "npm run dev --prefix frontend",
+        "dev": "concurrently \"npm run server\" \"npm run client\"",
+        "test:server": "npm run test --prefix backend",
+        "test:client": "npm run test --prefix frontend",
+        "test": "concurrently \"npm run test:server\" \"npm run test:client\""
     },
     "author": "",
-    "license": "ISC"
-  }
-  
+    "license": "ISC",
+    "devDependencies": {
+        "concurrently": "^9.1.0"
+    }
+}
