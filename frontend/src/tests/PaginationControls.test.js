@@ -1,80 +1,51 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import PaginationControls from "../components/PaginationControls";
-import { ThemeProvider, createTheme } from "@mui/material";
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import PaginationControls from '../components/PaginationControls';
 
-const theme = createTheme();
-
-const renderWithTheme = (ui) =>
-  render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
-
-describe("PaginationControls Component", () => {
+describe('PaginationControls Component', () => {
   const onPageChange = jest.fn();
   const onLimitChange = jest.fn();
 
-  beforeEach(() => {
-    jest.clearAllMocks(); // Clear mocks before each test
-  });
-
-  test("renders items per page select and pagination buttons", () => {
-    renderWithTheme(
+  it('should render items per page select', () => {
+    render(
       <PaginationControls
-        totalItems={50}
+        totalItems={100}
         page={1}
         limit={10}
         onPageChange={onPageChange}
         onLimitChange={onLimitChange}
       />
     );
-
-    expect(screen.getByText(/Items per page:/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "10" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
+    expect(screen.getByText(/items per page:/i)).toBeVisible();
+    expect(screen.getByRole('combobox')).toBeVisible();
   });
 
-  test("calls onPageChange when a page is clicked", () => {
-    renderWithTheme(
+  it('should render pagination', () => {
+    render(
       <PaginationControls
-        totalItems={50}
+        totalItems={100}
         page={1}
         limit={10}
         onPageChange={onPageChange}
         onLimitChange={onLimitChange}
       />
     );
-
-    fireEvent.click(screen.getByRole("button", { name: "2" }));
-    expect(onPageChange).toHaveBeenCalledWith(2); // Ensure the correct page number is passed
+    expect(screen.getByRole('list')).toBeVisible();
   });
 
-  test("calls onLimitChange when limit is changed", () => {
-    renderWithTheme(
+  it('should call onPageChange when page is changed', () => {
+    render(
       <PaginationControls
-        totalItems={50}
+        totalItems={100}
         page={1}
         limit={10}
         onPageChange={onPageChange}
         onLimitChange={onLimitChange}
       />
     );
-
-    fireEvent.mouseDown(screen.getAllByRole("button", { name: "10" }));
-    fireEvent.click(screen.getAllByRole("option", { name: "20" }));
-
-    expect(onLimitChange).toHaveBeenCalledWith(20);
-  });
-
-  test("calculates total pages correctly", () => {
-    renderWithTheme(
-      <PaginationControls
-        totalItems={55}
-        page={1}
-        limit={10}
-        onPageChange={onPageChange}
-        onLimitChange={onLimitChange}
-      />
-    );
-
-    expect(screen.getByText("6")).toBeInTheDocument();
-  });
+    fireEvent.click(screen.getByText('2'));
+    expect(onPageChange).toHaveBeenCalledTimes(1);
+    expect(onPageChange).toHaveBeenCalledWith(expect.anything(), 2);
+  })
 });

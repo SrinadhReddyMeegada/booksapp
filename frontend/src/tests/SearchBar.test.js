@@ -1,44 +1,24 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import SearchBar from "./SearchBar";
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import SearchBar from '../components/SearchBar';
 
-describe("SearchBar Component", () => {
-  let query;
-  let onQueryChange;
-  let onSearch;
+describe('SearchBar Component', () => {
+  const onSearch = jest.fn();
 
-  beforeEach(() => {
-    query = "";
-    onQueryChange = jest.fn((event) => {
-      query = event.target.value;
-    });
-    onSearch = jest.fn();
+  it('should render search input with correct label', () => {
+    render(<SearchBar query="" onSearch={onSearch} />);
+    expect(screen.getByLabelText('Search Books or Authors')).toBeVisible();
   });
 
-  test("renders SearchBar with input and button", () => {
-    render(
-      <SearchBar
-        query={query}
-        onQueryChange={onQueryChange}
-        onSearch={onSearch}
-      />
-    );
-    const inputElement = screen.getByLabelText(/search books or authors/i);
-    expect(inputElement).toBeInTheDocument();
+  it('should display the correct query value', () => {
+    render(<SearchBar query="test query" onSearch={onSearch} />);
+    expect(screen.getByDisplayValue('test query')).toBeVisible();
   });
 
-  test("calls onQueryChange when typing in input", () => {
-    render(
-      <SearchBar
-        query={query}
-        onQueryChange={onQueryChange}
-        onSearch={onSearch}
-      />
-    );
-
-    const inputElement = screen.getByLabelText(/search books or authors/i);
-    fireEvent.change(inputElement, { target: { value: "Harry Potter" } });
-    expect(onQueryChange).toHaveBeenCalledTimes(1);
-    expect(query).toBe("Harry Potter");
+  it('should call onSearch when input value changes', () => {
+    render(<SearchBar query="" onSearch={onSearch} />);
+    fireEvent.change(screen.getByLabelText('Search Books or Authors'), { target: { value: 'new query' } });
+    expect(onSearch).toHaveBeenCalled();
   });
 });

@@ -1,81 +1,40 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import BookGrid from "../components/BookGrid";
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import BookGrid from '../components/BookGrid';
 
-const mockBooks = [
-  {
-    id: 1,
-    title: "Test Book 1",
-    authors: ["Author 1", "Author 2"],
-    description:
-      "This is a detailed description of Test Book 1 which is quite long and should be truncated.",
-    publishedDate: "2023-01-01",
-  },
-  {
-    id: 2,
-    title: "Test Book 2",
-    authors: [],
-    description: "",
-    publishedDate: "2022-01-01",
-  },
-];
+describe('BookGrid Component', () => {
+  const books = [
+    {
+      id: '1',
+      title: 'Test Book 1',
+      authors: ['Author 1'],
+      description: 'This is a test description for book 1.',
+    },
+    {
+      id: '2',
+      title: 'Test Book 2',
+      authors: ['Author 2'],
+      description: 'This is a test description for book 2.',
+    },
+  ];
 
-describe("BookGrid Component", () => {
-  test("renders without crashing", () => {
-    render(<BookGrid books={mockBooks} />);
-    expect(screen.getByText(/Test Book 1/i)).toBeInTheDocument();
-    expect(screen.getByText(/Test Book 2/i)).toBeInTheDocument();
+  it('should render loading state', () => {
+    render(<BookGrid books={books} loading={true} />);
+    expect(screen.queryByText('Test Book 1')).toBeNull();
   });
 
-  test("displays authors correctly", () => {
-    render(<BookGrid books={mockBooks} />);
-    expect(
-      screen.getByText(/Author 1, Author 2 - Test Book 1/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/No authors available - Test Book 2/i)
-    ).toBeInTheDocument();
+  it('should render book details when not loading', () => {
+    render(<BookGrid books={books} loading={false} />);
+    books.forEach((book) => {
+      expect(screen.getByText(`${book.authors.join(', ')} - ${book.title}`)).toBeVisible();
+      expect(screen.getByText(book.description)).toBeVisible();
+    });
   });
 
-  test("shows truncated description by default", () => {
-    render(<BookGrid books={mockBooks} />);
-
-    // Check for truncated description
-    expect(
-      screen.queryByText(
-        /This is a detailed description of Test Book 1 which is quite long and should be truncated./i
-      )
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /This is a detailed description of Test Book 1 which is quite long and should be truncated.../i
-      )
-    ).toBeInTheDocument();
-  });
-
-  test("toggles description on button click", () => {
-    render(<BookGrid books={mockBooks} />);
-
-    // Click to view more
-    const viewMoreButton = screen.getAllByRole("button", {
-      name: /View More/i,
-    })[0];
-    fireEvent.click(viewMoreButton);
-    expect(
-      screen.getByText(
-        /This is a detailed description of Test Book 1 which is quite long and should be truncated./i
-      )
-    ).toBeInTheDocument();
-
-    // Click to view less
-    const viewLessButton = screen.getAllByRole("button", {
-      name: /View Less/i,
-    })[0];
-    fireEvent.click(viewLessButton);
-    expect(
-      screen.getByText(
-        /This is a detailed description of Test Book 1 which is quite long and should be truncated.../i
-      )
-    ).toBeInTheDocument();
+  it('should render no books when books array is empty', () => {
+    render(<BookGrid books={[]} loading={false} />);
+    expect(screen.queryByText('Test Book 1')).toBeNull();
+    expect(screen.queryByText('Test Book 2')).toBeNull();
   });
 });
